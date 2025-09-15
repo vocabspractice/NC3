@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Vocab Practice</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='256' height='256'><rect width='256' height='256' fill='%23007aff'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='140' fill='white'>A</text></svg>">
+  <style>
+    :root{--bg:#0f172a;--card:#111827;--txt:#e5e7eb;--muted:#9ca3af;--acc:#60a5fa;--good:#10b981;--again:#ef4444}
+    html,body{height:100%}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:var(--bg); color:var(--txt); -webkit-font-smoothing:antialiased}
+    .wrap{display:grid; grid-template-rows:auto 1fr auto; height:100%;}
+    header,footer{padding:10px 12px; background:#0b1023cc; backdrop-filter: blur(8px); position:sticky; z-index:2}
+    header{top:0; display:flex; gap:8px; align-items:center; justify-content:space-between}
+    footer{bottom:0; display:flex; gap:10px; justify-content:space-between; align-items:center}
+    .btn{appearance:none; border:1px solid #334155; background:#0b1228; color:var(--txt); padding:10px 14px; border-radius:14px; font-size:16px}
+    .btn.primary{border-color:#1d4ed8}
+    .btn.good{border-color:var(--good)}
+    .btn.again{border-color:var(--again)}
+    .btn:active{transform:scale(0.98)}
+    .stack{display:flex; gap:8px; flex-wrap:wrap}
+    .content{display:grid; place-items:center; padding:12px}
+    .card{width:100%; max-width:720px; aspect-ratio:3/4; border-radius:28px; background:linear-gradient(180deg,#0b1228,#0b0f1f); border:1px solid #233; box-shadow:0 10px 30px #0008; display:grid; grid-template-rows:1fr auto; overflow:hidden}
+    .face{display:grid; place-items:center; padding:24px; text-align:center; font-size:42px; line-height:1.2}
+    .hint{font-size:16px; color:var(--muted); margin-top:8px}
+    .meta{display:flex; justify-content:space-between; align-items:center; font-size:14px; padding:10px 14px; color:var(--muted); border-top:1px solid #233}
+    .pill{border:1px solid #334155; border-radius:999px; padding:4px 10px}
+    .row{display:flex; gap:8px; align-items:center}
+    dialog{border:1px solid #334155; border-radius:14px; background:#0b1023; color:var(--txt); width:min(720px,92vw)}
+    textarea, input{width:100%; background:#0b1228; color:var(--txt); border:1px solid #334155; border-radius:12px; padding:10px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    label{font-size:14px; color:var(--muted)}
+    .grid{display:grid; gap:10px}
+    .grid.cols2{grid-template-columns:1fr 1fr}
+    .kbd{font-family:ui-monospace,monospace; background:#111827; border:1px solid #334155; padding:2px 6px; border-radius:8px}
+    .ghost{opacity:.5}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="row">
+      <strong>Vocab Practice</strong>
+      <span class="pill" id="deckName">Default Deck</span>
+    </div>
+    <div class="stack">
+      <button class="btn" id="btnLoad">Load Deck</button>
+      <button class="btn" id="btnExport">Export Progress</button>
+      <button class="btn" id="btnImport">Import</button>
+      <button class="btn" id="btnReset">Reset</button>
+      <label class="row"><input type="checkbox" id="ttsToggle"/> TTS</label>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="card" id="card">
+      <div class="face" id="face">
+        <div>
+          <div id="front" aria-live="polite"></div>
+          <div class="hint" id="hint"></div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="row">
+          <span class="pill" id="count">0/0</span>
+          <span class="pill" id="boxInfo">Box 1</span>
+        </div>
+        <div class="row ghost">Tap: flip • ⟵ Again • ⟶ Good • ↑ Audio</div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <button class="btn again" id="btnAgain">Again</button>
+    <div class="row">
+      <button class="btn" id="btnFlip">Flip</button>
+      <button class="btn" id="btnAudio">Audio</button>
+    </div>
+    <button class="btn good" id="btnGood">Good</button>
+  </footer>
+</div>
+
+<dialog id="loadDialog">
+  <form method="dialog" class="grid">
+    <h3>Load a Deck</h3>
+    <label>Paste JSON (array of {front, back, hint?, audioText?})</label>
+    <textarea id="deckInput" rows="10" placeholder='[
+  {"front":"dog","back":"いぬ","hint":"noun"},
+  {"front":"run","back":"はしる","hint":"verb","audioText":"run"}
+]'></textarea>
+    <div class="grid cols2">
+      <input id="deckTitle" placeholder="Deck name (e.g., JHS A1 Set 1)" />
+      <button class="btn primary" id="applyDeck">Use Deck</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="importDialog">
+  <form method="dialog" class="grid">
+    <h3>Import Progress</h3>
+    <label>Paste data exported from this app:</label>
+    <textarea id="importText" rows="10"></textarea>
+    <button class="btn primary" id="applyImport">Import</button>
+  </form>
+</dialog>
+
+<script>
+(function(){
+  const cardEl = document.getElementById('card');
+  const frontEl = document.getElementById('front');
+  const hintEl = document.getElementById('hint');
+  const countEl = document.getElementById('count');
+  const boxInfoEl = document.getElementById('boxInfo');
+  const deckNameEl = document.getElementById('deckName');
+  const btnFlip = document.getElementById('btnFlip');
+  const btnAgain = document.getElementById('btnAgain');
+  const btnGood = document.getElementById('btnGood');
+  const btnAudio = document.getElementById('btnAudio');
+  const ttsToggle = document.getElementById('ttsToggle');
+  const loadDialog = document.getElementById('loadDialog');
+  const deckInput = document.getElementById('deckInput');
+  const deckTitle = document.getElementById('deckTitle');
+  const btnLoad = document.getElementById('btnLoad');
+  const btnExport = document.getElementById('btnExport');
+  const btnImport = document.getElementById('btnImport');
+  const importDialog = document.getElementById('importDialog');
+  const importText = document.getElementById('importText');
+  const applyImport = document.getElementById('applyImport');
+  const btnReset = document.getElementById('btnReset');
+
+  const LS_KEY = 'vocab.practice.v1';
+
+  // Default starter deck
+  const starter = {
+    name: 'Default Deck',
+    cards: [
+      {front:'dog', back:'いぬ', hint:'noun'},
+      {front:'run', back:'はしる', hint:'verb'},
+      {front:'because', back:'なぜなら', hint:'connector'},
+      {front:'library', back:'としょかん', hint:'place'},
+      {front:'study', back:'べんきょう する', hint:'verb'}
+    ]
+  };
+
+  // State
+  let state = loadState() || createState(starter);
+  let showingBack = false;
+
+  function createState(deck){
+    // Three-box Leitner with simple scheduling: box1 (new), box2 (review), box3 (mastered)
+    const now = Date.now();
+    const items = deck.cards.map((c,i)=>({
+      id: 'c'+i+':'+hash(JSON.stringify(c)),
+      front: c.front, back:c.back, hint:c.hint||'', audioText:c.audioText||c.front,
+      box: 1, due: now, seen:0, lapses:0
+    }));
+    return {deckName: deck.name||'Deck', items, idx:0, order:shuffle(items.map((_,i)=>i)), lastSave: now};
+  }
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw) return null;
+      return JSON.parse(raw);
+    }catch(e){ return null }
+  }
+  function saveState(){
+    state.lastSave = Date.now();
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  }
+
+  function hash(s){ let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0 } return Math.abs(h) }
+  function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a }
+
+  function nextIndex(){
+    const now = Date.now();
+    const dueIndices = state.order.filter(i => state.items[i].due <= now);
+    if(dueIndices.length) return dueIndices[0];
+    // if nothing due, show nearest due
+    return state.order[0];
+  }
+
+  function schedule(item, result){
+    // Simple: box1 -> (again: stay, good: box2 in 10m)
+    // box2 -> (again: box1 now, good: box3 in 1d)
+    // box3 -> (again: box2 in 30m, good: box3 in 4d)
+    const now = Date.now();
+    if(result==='again'){
+      item.lapses++; item.seen++;
+      if(item.box===1){ item.box=1; item.due= now + 2*60*1000 } // 2 min
+      else if(item.box===2){ item.box=1; item.due= now + 2*60*1000 }
+      else { item.box=2; item.due= now + 30*60*1000 }
+    } else { // good
+      item.seen++;
+      if(item.box===1){ item.box=2; item.due= now + 10*60*1000 }
+      else if(item.box===2){ item.box=3; item.due= now + 24*60*60*1000 }
+      else { item.box=3; item.due= now + 4*24*60*60*1000 }
+    }
+    // rotate order
+    state.order = state.order.filter(i=> state.items[i].id!==item.id);
+    // insert maintaining due ordering
+    const idx = state.items.findIndex(it=>it.id===item.id);
+    const pos = state.order.findIndex(i => state.items[i].due > item.due);
+    if(pos===-1) state.order.push(idx); else state.order.splice(pos,0,idx);
+  }
+
+  function render(){
+    const i = nextIndex();
+    state.idx = i;
+    const item = state.items[i];
+    deckNameEl.textContent = state.deckName;
+    countEl.textContent = `${state.items.filter(x=>x.due<=Date.now()).length}/${state.items.length}`;
+    boxInfoEl.textContent = `Box ${item.box}`;
+    if(showingBack){
+      frontEl.textContent = item.back;
+      hintEl.textContent = item.front;
+    } else {
+      frontEl.textContent = item.front;
+      hintEl.textContent = item.hint||'';
+    }
+  }
+
+  function flip(){ showingBack = !showingBack; render() }
+
+  function speak(text){
+    if(!ttsToggle.checked) return;
+    try{
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US';
+      speechSynthesis.cancel();
+      speechSynthesis.speak(u);
+    }catch(e){ /* ignore */ }
+  }
+
+  function grade(result){
+    const item = state.items[state.idx];
+    if(!showingBack){ flip(); return } // must see answer first
+    schedule(item, result);
+    showingBack = false;
+    saveState();
+    render();
+  }
+
+  // Input handlers
+  btnFlip.addEventListener('click', ()=> flip());
+  btnAudio.addEventListener('click', ()=> {
+    const item = state.items[state.idx];
+    const text = showingBack ? item.back : item.audioText || item.front;
+    speak(text);
+  });
+  btnAgain.addEventListener('click', ()=> grade('again'));
+  btnGood.addEventListener('click', ()=> grade('good'));
+
+  // Touch/keys
+  let startX=null, startY=null;
+  cardEl.addEventListener('touchstart', e=>{ const t=e.touches[0]; startX=t.clientX; startY=t.clientY; }, {passive:true});
+  cardEl.addEventListener('touchend', e=>{
+    if(startX===null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX; const dy = t.clientY - startY;
+    if(Math.abs(dx) > Math.abs(dy)){
+      if(dx > 40) grade('good'); else if(dx < -40) grade('again');
+      else flip();
+    } else {
+      if(dy < -40) { // swipe up
+        const item = state.items[state.idx]; speak(item.audioText||item.front);
+      } else {
+        flip();
+      }
+    }
+    startX=startY=null;
+  }, {passive:true});
+
+  window.addEventListener('keydown', e=>{
+    if(e.key==='ArrowLeft') grade('again');
+    else if(e.key==='ArrowRight') grade('good');
+    else if(e.key==='ArrowUp') { const item = state.items[state.idx]; speak(item.audioText||item.front) }
+    else if(e.key===' ' || e.key==='Enter') flip();
+  });
+
+  // Load/Import/Export/Reset
+  btnLoad.addEventListener('click', ()=>{ deckInput.value=''; deckTitle.value=''; loadDialog.showModal() });
+  document.getElementById('applyDeck').addEventListener('click', (ev)=>{
+    ev.preventDefault();
+    try{
+      const arr = JSON.parse(deckInput.value.trim()||'[]');
+      if(!Array.isArray(arr) || arr.length===0) { alert('Please paste an array of cards'); return }
+      const name = deckTitle.value.trim()||'Custom Deck';
+      state = createState({name, cards: arr});
+      saveState(); loadDialog.close(); showingBack=false; render();
+    }catch(e){ alert('Invalid JSON') }
+  });
+
+  btnExport.addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(state)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download = `${state.deckName.replace(/\s+/g,'_')}_progress.json`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+
+  btnImport.addEventListener('click', ()=>{ importText.value=''; importDialog.showModal() });
+  applyImport.addEventListener('click', (ev)=>{
+    ev.preventDefault();
+    try{
+      const obj = JSON.parse(importText.value.trim());
+      if(!obj || !obj.items) { alert('Not a valid export file'); return }
+      state = obj; saveState(); importDialog.close(); showingBack=false; render();
+    }catch(e){ alert('Invalid JSON') }
+  });
+
+  btnReset.addEventListener('click', ()=>{
+    if(confirm('Reset to starter deck and clear progress?')){
+      state = createState(starter); saveState(); showingBack=false; render();
+    }
+  });
+
+  // First paint
+  saveState();
+  render();
+})();
+</script>
+</body>
+</html>
