@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>単語れんしゅう</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root{--bg:#0f172a;--card:#111827;--txt:#e5e7eb;--muted:#9ca3af;--good:#10b981;--again:#ef4444}
+    body{margin:0;font-family:sans-serif;background:var(--bg);color:var(--txt)}
+    .wrap{display:grid;grid-template-rows:auto 1fr auto;height:100vh}
+    header,footer{padding:10px;background:#0b1023cc;backdrop-filter:blur(8px);color:white;display:flex;align-items:center;justify-content:space-between}
+    footer{justify-content:space-around}
+    .btn{padding:8px 14px;border:1px solid #334155;background:#111827;color:var(--txt);border-radius:8px;cursor:pointer}
+    .btn.good{border-color:var(--good)}
+    .btn.again{border-color:var(--again)}
+    .content{display:grid;place-items:center}
+    .card{background:#111827;border:1px solid #233;border-radius:16px;padding:20px;max-width:400px;text-align:center;font-size:32px}
+    .meta{margin-top:8px;font-size:14px;color:var(--muted)}
+    /* Modal */
+    .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:#000a;display:none;align-items:center;justify-content:center;z-index:10}
+    .modal-content{background:#0b1023;padding:20px;border-radius:12px;max-width:500px;width:90%}
+    textarea,input{width:100%;margin-top:8px;background:#111827;color:var(--txt);border:1px solid #334155;border-radius:6px;padding:8px}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><strong>単語れんしゅう</strong> <span id="deckName">デフォルト</span></div>
+    <div>
+      <button class="btn" id="btnLoad">デッキ読込</button>
+      <button class="btn" id="btnExport">成績保存</button>
+      <button class="btn" id="btnImport">成績読込</button>
+      <button class="btn" id="btnReset">リセット</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="card" id="card">
+      <div id="front">dog</div>
+      <div class="meta" id="hint">名詞</div>
+    </div>
+  </main>
+
+  <footer>
+    <button class="btn again" id="btnAgain">もう一度</button>
+    <button class="btn" id="btnFlip">裏返す</button>
+    <button class="btn good" id="btnGood">OK</button>
+  </footer>
+</div>
+
+<!-- Load Deck Modal -->
+<div class="modal" id="loadModal">
+  <div class="modal-content">
+    <h3>デッキを読込</h3>
+    <label>JSONカードをペースト:</label>
+    <textarea id="deckInput" rows="8"></textarea>
+    <input id="deckTitle" placeholder="デッキ名"/>
+    <div style="margin-top:10px;text-align:right">
+      <button class="btn" id="applyDeck">決定</button>
+      <button class="btn" id="closeLoad">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const btnLoad=document.getElementById('btnLoad');
+const loadModal=document.getElementById('loadModal');
+const closeLoad=document.getElementById('closeLoad');
+const applyDeck=document.getElementById('applyDeck');
+const deckInput=document.getElementById('deckInput');
+const deckTitle=document.getElementById('deckTitle');
+const frontEl=document.getElementById('front');
+const hintEl=document.getElementById('hint');
+const deckNameEl=document.getElementById('deckName');
+let cards=[{"front":"いぬ","back":"dog","hint":"名詞"},{"front":"ねこ","back":"cat","hint":"名詞"}];
+let idx=0,showBack=false;
+
+btnLoad.onclick=()=>{loadModal.style.display='flex'}
+closeLoad.onclick=()=>{loadModal.style.display='none'}
+applyDeck.onclick=()=>{
+  try{
+    const arr=JSON.parse(deckInput.value);
+    if(Array.isArray(arr)&&arr.length>0){cards=arr;idx=0;showBack=false;deckNameEl.textContent=deckTitle.value||'カスタム';render();loadModal.style.display='none'}
+  }catch(e){alert('JSONエラー')}
+}
+
+function render(){
+  const c=cards[idx];
+  frontEl.textContent=showBack?c.back:c.front;
+  hintEl.textContent=c.hint||'';
+}
+
+document.getElementById('btnFlip').onclick=()=>{showBack=!showBack;render()}
+document.getElementById('btnAgain').onclick=()=>{idx=(idx+1)%cards.length;showBack=false;render()}
+document.getElementById('btnGood').onclick=()=>{idx=(idx+1)%cards.length;showBack=false;render()}
+
+render();
+</script>
+</body>
+</html>
